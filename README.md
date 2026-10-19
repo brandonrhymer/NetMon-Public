@@ -1,7 +1,7 @@
 # NetMon Lite
 
 A small Windows IPv4 reachability monitor written in Python, with a static browser
-dashboard. This portfolio prototype focuses on current status, bounded probes,
+dashboard. It focuses on current status, bounded probes,
 and making measurement failures visible. Python 3.11+; standard library only.
 
 ## Try it on Windows
@@ -40,12 +40,12 @@ authorized to monitor. Generated results in `published/` are ignored by Git.
   stale after an elapsed deadline or a failed fetch.
 
 There is no database, history store or application framework. These choices
-keep the collection path small enough to trace and discuss during an interview.
+keep the collection path small enough to understand, test and maintain.
 The tests mock ping responses to cover failure cases without contacting targets.
 
 ## Boundaries and honest limits
 
-This is a learning and portfolio prototype. A successful ping establishes only
+This is an early prototype. A successful ping establishes only
 that the selected device answered this collector. It does not prove application
 health or complete network health. ICMP filtering can prevent a reply.
 
@@ -60,14 +60,16 @@ For a server deployment, serve only the dashboard and published data through a
 separately configured authenticated HTTPS server. Keep configurations and source
 outside its document root. This repository does not provision that environment.
 
-## Interview discussion
+## Development workflow
 
-Useful review topics include interpreting ping results beyond exit codes,
-distinguishing a failed observation from an unavailable target, bounding work,
-atomic publication, stale data, and choosing what evidence a test actually proves.
-Future changes can be driven by observed needs: broader localization, clearer
-configuration errors, and target-server acceptance before deployment automation.
+Changes use short-lived branches and pull requests. The Windows CI workflow runs
+unit tests on Python 3.11 and 3.13 and performs a real loopback probe. Review the
+diff and CI results before merging. Branch protection is not yet configured.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the local checks and review criteria.
+Automated tests do not establish production deployment acceptance.
 
 ## License
 
 MIT; see [LICENSE](LICENSE).
+
