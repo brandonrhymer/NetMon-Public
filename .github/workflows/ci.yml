@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows-tests:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Unit tests
+        run: python -m unittest discover -s . -v
+      - name: Windows loopback smoke test
+        shell: pwsh
+        run: |
+          python netmon.py --once
+          if ($LASTEXITCODE -ne 0) { throw 'Collector failed' }
+          $result = Get-Content published/status.json -Raw | ConvertFrom-Json
+          if ($result.devices.Count -ne 1 -or $result.devices[0].address -ne '127.0.0.1' -or $result.devices[0].status -ne 'up') {
+            throw 'Expected one successful loopback reply'
+          }

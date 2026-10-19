@@ -60,6 +60,15 @@ For a server deployment, serve only the dashboard and published data through a
 separately configured authenticated HTTPS server. Keep configurations and source
 outside its document root. This repository does not provision that environment.
 
+## Development workflow
+
+Changes use short-lived branches and pull requests. The Windows CI workflow runs
+unit tests on Python 3.11 and 3.13 and performs a real loopback probe. Review the
+diff and CI results before merging. Branch protection is not yet configured.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the local checks and review criteria.
+Automated tests do not establish production deployment acceptance.
+
 ## License
 
 MIT; see [LICENSE](LICENSE).
