@@ -72,4 +72,3 @@ Automated tests do not establish production deployment acceptance.
 ## License
 
 MIT; see [LICENSE](LICENSE).
-
