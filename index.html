@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetMon Lite</title>
+<style>
+body {font:16px system-ui,sans-serif;margin:2rem auto;padding:0 1rem;max-width:1000px;background:#111827;color:#f3f4f6}
+h1 {margin-bottom:.3rem} p {color:#cbd5e1} #health {padding:1rem;background:#374151;border-radius:8px}
+#devices {display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-top:1rem}
+article {background:#1f2937;border:1px solid #475569;border-radius:8px;padding:1rem} h2 {font-size:1.1rem;margin:0 0 1rem;overflow-wrap:anywhere}
+.up {color:#86efac}.down {color:#fca5a5}.error,.stale {color:#fde68a} small {display:block;color:#cbd5e1;margin-top:.6rem;overflow-wrap:anywhere}
+</style>
+<h1>NetMon Lite</h1>
+<p>Selected-device reachability · current status only</p>
+<div id="health" role="status">Waiting for collector…</div>
+<main id="devices" aria-label="Device status"></main>
+<script>
+const health = document.querySelector('#health'), devices = document.querySelector('#devices');
+let latest = null, failed = false;
+function render() {
+  const age = latest ? (Date.now() - Date.parse(latest.updated_at)) / 1000 : Infinity;
+  const stale = failed || !Number.isFinite(age) || age < -10 || age >= latest?.stale_after_seconds;
+  health.textContent = !latest ? 'Collector unavailable — no current results' : stale ? 'STALE — device readings are unverified' : 'Collector current · updated ' + new Date(latest.updated_at).toLocaleTimeString();
+  health.className = stale ? 'stale' : '';
+  devices.replaceChildren();
+  for (const row of latest?.devices || []) {
+    const card = document.createElement('article'), name = document.createElement('h2'), state = document.createElement('strong');
+    name.textContent = row.name;
+    state.textContent = stale ? 'STALE' : row.status.toUpperCase(); state.className = stale ? 'stale' : row.status;
+    card.append(name, state);
+    for (const line of [row.address, 'RTT: ' + (stale || row.latency_ms === null ? '—' : row.latency_ms + ' ms'), 'Last reply: ' + (row.last_success_at ? new Date(row.last_success_at).toLocaleString() : 'none this run')]) {
+      const detail = document.createElement('small'); detail.textContent = line; card.append(detail);
+    }
+    devices.append(card);
+  }
+}
+async function refresh() {
+  try {
+    const response = await fetch('published/status.json?t=' + Date.now(), {cache:'no-store', signal:AbortSignal.timeout(4000)});
+    if (!response.ok) throw Error(response.status);
+    const data = await response.json();
+    if (!Number.isFinite(Date.parse(data.updated_at)) || !Number.isFinite(data.stale_after_seconds) || data.stale_after_seconds <= 0 || !Array.isArray(data.devices) || !data.devices.every(row => row && typeof row.name === 'string' && typeof row.address === 'string' && ['up','down','error'].includes(row.status))) throw Error('Invalid status');
+    latest = data; failed = false;
+  } catch { failed = true; }
+  render(); setTimeout(refresh, 2000);
+}
+refresh(); setInterval(render, 1000);
+</script>
+</html>
